@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>技能五子棋 · Skill Gomoku</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;900&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:#1A1510;font-family:'Noto Sans SC',sans-serif;color:#E8DCC8;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:14px 0 40px}
+  @keyframes dropIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,200,60,0.4)}50%{box-shadow:0 0 0 6px rgba(255,200,60,0)}}
+  @keyframes winGlow{0%,100%{opacity:1}50%{opacity:0.6}}
+  @keyframes overlayIn{from{opacity:0}to{opacity:1}}
+  @keyframes cardPop{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  @keyframes bounce{0%{transform:scale(1)}30%{transform:scale(1.3)}50%{transform:scale(.9)}100%{transform:scale(1)}}
+  h1{font-size:20px;font-weight:900;color:#E8C96B;letter-spacing:2px;text-align:center}
+  .sub{font-size:10px;color:#8A7A60;text-align:center;margin-top:2px}
+  .scorebar{display:flex;gap:20px;margin:8px 0 6px;font-size:12px;justify-content:center;align-items:center}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .dot-b{background:#1A1510;border:2px solid #555}
+  .dot-w{background:#E8E0D0;border:2px solid #ccc}
+  .status{font-size:11px;height:16px;text-align:center;margin-bottom:6px;color:#AAA}
+  .status.gold{color:#E8C96B;font-weight:700}
+  .status.dim{color:#8A7A60}
+  #boardWrap{position:relative;border-radius:6px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+  .cell{position:absolute;cursor:pointer;z-index:2}
+  .stone{position:absolute;border-radius:50%;z-index:3;animation:dropIn .2s ease}
+  .stone.last{animation:dropIn .2s ease,pulse 1.5s ease infinite}
+  .stone.win{animation:winGlow 1s infinite}
+  .stone.lose{opacity:.4}
+  .stone-inner{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,200,60,.7)}
+  .skills-section{margin-top:10px}
+  .skills-label{font-size:10px;color:#6A5A40;margin-bottom:4px;display:flex;justify-content:space-between}
+  .skills-row{display:flex;gap:4px;flex-wrap:wrap}
+  .skill-btn{flex:1 1 auto;min-width:56px;padding:6px 4px;border-radius:6px;border:1.5px solid #3A3020;background:#2A2218;color:#E8C96B;font-size:10px;font-family:inherit;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1;transition:all .15s}
+  .skill-btn:disabled{opacity:.3;cursor:default}
+  .skill-btn.active{background:rgba(232,201,107,.15);border-color:#E8C96B}
+  .skill-btn .se{font-size:14px}
+  .skill-btn .sn{font-weight:600;font-size:9px}
+  .ai-skill{font-size:9px;color:#3A3020;text-align:center}
+  .ai-skill.used{color:#EF4444;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2)}
+  .ai-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+  .ai-cell{flex:1 1 auto;min-width:56px;padding:4px;border-radius:6px;background:#1A1510;border:1px solid #2A2218;text-align:center;font-size:9px;color:#3A3020;display:flex;flex-direction:column;align-items:center;gap:1}
+  .ai-cell.used{color:#EF4444;background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2)}
+  .ai-cell .se{font-size:12px}
+  .btn{padding:9px 22px;border-radius:8px;background:#3A3020;border:1px solid #4A4030;color:#C8A96B;font-size:13px;font-family:inherit;cursor:pointer;margin-top:12px}
+  .btn.gold{background:linear-gradient(135deg,#C8A96B,#B8944A);border:none;color:#1A1510;font-weight:700}
+  .info{margin-top:6px;font-size:10px;color:#555;text-align:center}
+  .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-60px);background:#2A2218;border:1px solid #4A3A20;border-radius:10px;padding:8px 18px;font-size:12px;color:#E8C96B;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:transform .3s ease;z-index:999;pointer-events:none;white-space:nowrap;max-width:90%}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .toast-ai{position:fixed;top:56px;left:50%;transform:translateX(-50%) translateY(-60px);background:#1A1020;border:1px solid #4A2040;border-radius:10px;padding:8px 18px;font-size:12px;color:#EF4444;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:transform .3s ease;z-index:998;pointer-events:none;white-space:nowrap;max-width:90%}
+  .toast-ai.show{transform:translateX(-50%) translateY(0)}
+  .overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;padding:24px;animation:overlayIn .4s ease}
+  .overlay.show{display:flex}
+  .result-card{background:linear-gradient(160deg,#2A2218,#1A1510,#2A2218);border:1px solid #4A3A20;border-radius:16px;padding:32px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:cardPop .5s ease}
+  .result-icon{font-size:44px;margin-bottom:14px}
+  .result-title{font-size:26px;font-weight:800;letter-spacing:2px;margin-bottom:4px}
+  .result-sub{font-size:12px;color:#8A7A60;margin-bottom:18px}
+  .result-stats{display:flex;justify-content:center;gap:24px;margin-bottom:18px;padding:12px 0;border-top:1px solid #3A3020;border-bottom:1px solid #3A3020}
+  .stat-label{font-size:9px;color:#6A5A40;margin-bottom:2px}
+  .stat-val{font-size:16px;font-weight:700}
+  .result-btns{display:flex;gap:8px;justify-content:center}
+  .result-btns .btn{margin-top:0}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="toast-ai" id="toastAi"></div>
+
+<h1>技能五子棋</h1>
+<p class="sub">加入技能，好好玩，要爆了！</p>
+
+<div class="scorebar">
+  <span><span class="dot dot-b"></span> 你 <b id="scoreYou" style="color:#E8C96B">0</b></span>
+  <span style="font-size:10px;color:#555">vs</span>
+  <span><span class="dot dot-w"></span> AI <b id="scoreAi" style="color:#E8C96B">0</b></span>
+</div>
+
+<div class="status" id="status">你先手（黑子）</div>
+
+<div id="boardWrap"></div>
+
+<div class="skills-section" id="skillsSection"></div>
+
+<div style="text-align:center">
+  <button class="btn" id="restartBtn">重新开始</button>
+</div>
+<div class="info" id="info">第 0 回合</div>
+
+<div class="overlay" id="overlay">
+  <div class="result-card">
+    <div class="result-icon" id="rIcon"></div>
+    <div class="result-title" id="rTitle"></div>
+    <div class="result-sub" id="rSub"></div>
+    <div class="result-stats">
+      <div><div class="stat-label">回合</div><div class="stat-val" id="rTurn"></div></div>
+      <div><div class="stat-label">你的技能</div><div class="stat-val" id="rMySkills"></div></div>
+      <div><div class="stat-label">AI技能</div><div class="stat-val" id="rAiSkills" style="color:#EF4444"></div></div>
+      <div><div class="stat-label">总胜</div><div class="stat-val" id="rWins" style="color:#E8C96B"></div></div>
+    </div>
+    <div class="result-btns">
+      <button class="btn" id="rViewBtn">查看棋盘</button>
+      <button class="btn gold" id="rAgainBtn">再来一局</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var SIZE=15,WIN=5;
+var board,history2,winner,thinking,scores,myUsed,aiUsed,activeSkill,turnNum,streak;
+var cellSize,pad,totalSize;
+
+function makeBoard(){return Array.from({length:SIZE},function(){return Array(SIZE).fill(null);});}
+
+function init(){
+  board=makeBoard();history2=[];winner=null;thinking=false;
+  myUsed={};aiUsed={};activeSkill=null;turnNum=0;
+  if(!scores) scores={you:0,ai:0};
+  if(streak===undefined) streak=0;
+  calcSize();drawBoard();renderSkills();updateUI();
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function calcSize(){
+  cellSize=Math.floor(Math.min(window.innerWidth-32,460)/(SIZE+1));
+  pad=cellSize;totalSize=cellSize*(SIZE-1)+pad*2;
+}
+
+/* ---- WIN CHECK ---- */
+function checkWin(b,r,c){
+  var p=b[r][c];if(!p)return null;
+  var dirs=[[0,1],[1,0],[1,1],[1,-1]];
+  for(var d=0;d<dirs.length;d++){var dr=dirs[d][0],dc=dirs[d][1],n=1;
+    for(var i=1;i<WIN;i++){var nr=r+dr*i,nc=c+dc*i;if(nr<0||nr>=SIZE||nc<0||nc>=SIZE||b[nr][nc]!==p)break;n++;}
+    for(var i=1;i<WIN;i++){var nr=r-dr*i,nc=c-dc*i;if(nr<0||nr>=SIZE||nc<0||nc>=SIZE||b[nr][nc]!==p)break;n++;}
+    if(n>=WIN)return p;}
+  return null;
+}
+function checkAnyWin(b){for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++)if(b[r][c]&&checkWin(b,r,c))return b[r][c];return null;}
+
+/* ---- AI SCORING ---- */
+function scorePos(b,r,c,pl){
+  if(b[r][c]!==null)return -1;var op=pl==="black"?"white":"black",tot=0;
+  var dirs=[[0,1],[1,0],[1,1],[1,-1]];
+  for(var d=0;d<dirs.length;d++){var dr=dirs[d][0],dc=dirs[d][1];
+    var m=1,bl=0;
+    for(var i=1;i<=4;i++){var nr=r+dr*i,nc=c+dc*i;if(nr<0||nr>=SIZE||nc<0||nc>=SIZE){bl++;break;}if(b[nr][nc]===pl)m++;else{if(b[nr][nc]===op)bl++;break;}}
+    for(var i=1;i<=4;i++){var nr=r-dr*i,nc=c-dc*i;if(nr<0||nr>=SIZE||nc<0||nc>=SIZE){bl++;break;}if(b[nr][nc]===pl)m++;else{if(b[nr][nc]===op)bl++;break;}}
+    if(m>=5)tot+=100000;else if(m===4&&bl===0)tot+=10000;else if(m===4)tot+=1000;else if(m===3&&bl===0)tot+=1000;else if(m===3)tot+=100;else if(m===2&&bl===0)tot+=50;else tot+=m*2;
+    var o=1,ob=0;
+    for(var i=1;i<=4;i++){var nr=r+dr*i,nc=c+dc*i;if(nr<0||nr>=SIZE||nc<0||nc>=SIZE){ob++;break;}if(b[nr][nc]===op)o++;else{if(b[nr][nc]===pl)ob++;break;}}
+    for(var i=1;i<=4;i++){var nr=r-dr*i,nc=c-dc*i;if(nr<0||nr>=SIZE||nc<0||nc>=SIZE){ob++;break;}if(b[nr][nc]===op)o++;else{if(b[nr][nc]===pl)ob++;break;}}
+    if(o>=5)tot+=90000;else if(o===4&&ob===0)tot+=9000;else if(o===4)tot+=800;else if(o===3&&ob===0)tot+=800;else if(o===3)tot+=60;}
+  return tot;
+}
+function findBestMove(b,pl){
+  var best=-1,br=-1,bc=-1,ck={};
+  for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++)if(b[r][c]!==null)
+    for(var dr=-2;dr<=2;dr++)for(var dc=-2;dc<=2;dc++){var nr=r+dr,nc=c+dc;if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE)ck[nr+","+nc]=1;}
+  if(Object.keys(ck).length===0)return{r:7,c:7};
+  for(var k in ck){var p=k.split(","),r2=+p[0],c2=+p[1];var s=scorePos(b,r2,c2,pl);if(s>best){best=s;br=r2;bc=c2;}}
+  return{r:br,c:bc};
+}
+function findLongestLine(b,pl){
+  var bestLen=0,bestCells=[],dirs=[[0,1],[1,0],[1,1],[1,-1]];
+  for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++){if(b[r][c]!==pl)continue;
+    for(var d=0;d<dirs.length;d++){var dr=dirs[d][0],dc=dirs[d][1],cells=[[r,c]];
+      for(var i=1;i<SIZE;i++){var nr=r+dr*i,nc=c+dc*i;if(nr<0||nr>=SIZE||nc<0||nc>=SIZE||b[nr][nc]!==pl)break;cells.push([nr,nc]);}
+      if(cells.length>bestLen){bestLen=cells.length;bestCells=cells;}}}
+  return{len:bestLen,cells:bestCells};
+}
+
+/* ---- SKILLS ---- */
+var SKILLS=[
+  {id:"feisha",name:"飞沙走石",emoji:"🌪️",desc:"选择敌方棋子，连带周围2格内敌方一起消除",color:"#E8C96B",needTarget:true,
+    targetFilter:function(b,r,c,me){return b[r][c]===(me==="black"?"white":"black");},
+    execute:function(b,r,c,me){var op=me==="black"?"white":"black",nb=b.map(function(x){return x.slice();}),rm=0;
+      for(var dr=-2;dr<=2;dr++)for(var dc=-2;dc<=2;dc++){var nr=r+dr,nc=c+dc;if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&nb[nr][nc]===op){nb[nr][nc]=null;rm++;}}
+      return{board:nb,msg:"🌪️ 飞沙走石！扔掉了 "+rm+" 颗棋子"};}},
+  {id:"jingru",name:"静如止水",emoji:"🧊",desc:"冻结对手，跳过一回合",color:"#67E8F9",needTarget:false,
+    execute:function(b){return{board:b.map(function(x){return x.slice();}),msg:"🧊 静如止水！对手被冻结一回合",skipOpponent:true};}},
+  {id:"liba",name:"力拔山兮",emoji:"💪",desc:"翻转2颗敌方棋子为己方",color:"#F59E0B",needTarget:false,
+    execute:function(b,_r,_c,me){var op=me==="black"?"white":"black",nb=b.map(function(x){return x.slice();}),es=[];
+      for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++)if(nb[r][c]===op)es.push([r,c]);
+      var n=Math.min(2,es.length);for(var i=0;i<n;i++){var idx=Math.floor(Math.random()*es.length);var e=es.splice(idx,1)[0];nb[e[0]][e[1]]=me;}
+      return{board:nb,msg:"💪 力拔山兮！翻转了 "+n+" 颗棋子"};}},
+  {id:"baojie",name:"保洁上门",emoji:"🧹",desc:"选一列，整列棋子全部清除",color:"#A78BFA",needTarget:true,targetMode:"column",
+    targetFilter:function(){return true;},
+    execute:function(b,_r,c){var nb=b.map(function(x){return x.slice();}),rm=0;
+      for(var r=0;r<SIZE;r++){if(nb[r][c]!==null)rm++;nb[r][c]=null;}
+      return{board:nb,msg:"🧹 保洁上门！清除第 "+(c+1)+" 列共 "+rm+" 颗"};}},
+  {id:"seeyou",name:"See You Again",emoji:"🤚",desc:"消除敌方最长连线",color:"#EF4444",needTarget:false,
+    execute:function(b,_r,_c,me){var op=me==="black"?"white":"black",nb=b.map(function(x){return x.slice();}),r=findLongestLine(nb,op);
+      r.cells.forEach(function(p){nb[p[0]][p[1]]=null;});return{board:nb,msg:"🤚 See You Again！消除了 "+r.len+" 颗连线"};}},
+  {id:"dongshan",name:"东山再起",emoji:"🔄",desc:"随机新增2颗己方棋子",color:"#34D399",needTarget:false,
+    execute:function(b,_r,_c,me){var nb=b.map(function(x){return x.slice();}),emp=[];
+      for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++)if(nb[r][c]===null)emp.push([r,c]);
+      var n=Math.min(2,emp.length);for(var i=0;i<n;i++){var idx=Math.floor(Math.random()*emp.length);var e=emp.splice(idx,1)[0];nb[e[0]][e[1]]=me;}
+      return{board:nb,msg:"🔄 东山再起！新增了 "+n+" 颗棋子"};}},
+];
+
+/* ---- AI SKILL DECISION ---- */
+function aiDecideSkill(){
+  if(turnNum<6)return null;
+  var opp=findLongestLine(board,"black");
+  if(opp.len>=4&&!aiUsed.seeyou)return"seeyou";
+  if(opp.len>=3&&!aiUsed.feisha&&Math.random()>.4)return"feisha";
+  if(turnNum>10&&!aiUsed.liba&&Math.random()>.7)return"liba";
+  if(turnNum>8&&!aiUsed.jingru&&Math.random()>.8)return"jingru";
+  if(turnNum>14&&!aiUsed.dongshan&&Math.random()>.6)return"dongshan";
+  if(turnNum>12&&!aiUsed.baojie&&opp.len>=3&&Math.random()>.5)return"baojie";
+  return null;
+}
+function aiExecuteSkill(skillId){
+  var sk=SKILLS.find(function(s){return s.id===skillId;});if(!sk)return null;
+  if(sk.needTarget){
+    if(skillId==="feisha"){var ll=findLongestLine(board,"black");if(ll.cells.length>0){var mid=ll.cells[Math.floor(ll.cells.length/2)];return sk.execute(board,mid[0],mid[1],"white");}
+      for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++)if(board[r][c]==="black")return sk.execute(board,r,c,"white");}
+    if(skillId==="baojie"){var bestCol=0,bestCnt=0;for(var c=0;c<SIZE;c++){var cnt=0;for(var r=0;r<SIZE;r++)if(board[r][c]==="black")cnt++;if(cnt>bestCnt){bestCnt=cnt;bestCol=c;}}return sk.execute(board,0,bestCol,"white");}}
+  return sk.execute(board,0,0,"white");
+}
+
+/* ---- TOAST ---- */
+function flash(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
+function flashAi(msg){var t=document.getElementById('toastAi');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+
+/* ---- HANDLE WIN ---- */
+function handleWin(who){
+  winner=who;
+  if(who==="black"){scores.you++;streak++;}else{scores.ai++;streak=0;}
+  drawBoard();updateUI();
+  setTimeout(showResult,800);
+}
+
+/* ---- AI TURN ---- */
+function doAiTurn(skip){
+  if(skip){thinking=false;updateUI();return;}
+  thinking=true;updateUI();
+  setTimeout(function(){
+    var skillId=aiDecideSkill();
+    if(skillId){
+      var result=aiExecuteSkill(skillId);
+      if(result){
+        board=result.board;aiUsed[skillId]=true;
+        var sk=SKILLS.find(function(s){return s.id===skillId;});
+        flashAi("AI 使用了 "+sk.emoji+" "+sk.name+"！");
+        drawBoard();renderSkills();
+        var w=checkAnyWin(board);if(w){handleWin(w);thinking=false;return;}
+        if(result.skipOpponent){
+          setTimeout(function(){
+            var mv=findBestMove(board,"white");
+            if(mv.r>=0){board[mv.r][mv.c]="white";history2.push({r:mv.r,c:mv.c,p:"white"});}
+            drawBoard();var w2=checkAnyWin(board);if(w2)handleWin(w2);
+            thinking=false;updateUI();
+          },600);return;
+        }
+        thinking=false;updateUI();return;
+      }
+    }
+    var mv=findBestMove(board,"white");
+    if(mv.r>=0){board[mv.r][mv.c]="white";history2.push({r:mv.r,c:mv.c,p:"white"});
+      var w=checkWin(board,mv.r,mv.c);drawBoard();if(w)handleWin(w);}
+    thinking=false;updateUI();
+  },400+Math.random()*500);
+}
+
+/* ---- PLACE STONE / SKILL TARGET ---- */
+function placeStone(r,c){
+  if(winner||thinking)return;
+  if(activeSkill){
+    var sk=SKILLS.find(function(s){return s.id===activeSkill;});
+    if(sk&&sk.needTarget){
+      if(sk.targetMode==="column"){
+        var result=sk.execute(board,r,c,"black");board=result.board;myUsed[sk.id]=true;activeSkill=null;
+        flash(result.msg);turnNum++;drawBoard();renderSkills();updateUI();
+        var w=checkAnyWin(board);if(w){handleWin(w);return;}doAiTurn(result.skipOpponent);return;
+      }
+      if(sk.targetFilter&&!sk.targetFilter(board,r,c,"black")){flash("⚠ 请选择敌方棋子");return;}
+      var result=sk.execute(board,r,c,"black");board=result.board;myUsed[sk.id]=true;activeSkill=null;
+      flash(result.msg);turnNum++;drawBoard();renderSkills();updateUI();
+      var w=checkAnyWin(board);if(w){handleWin(w);return;}doAiTurn(result.skipOpponent);return;
+    }
+  }
+  if(board[r][c])return;
+  board[r][c]="black";history2.push({r:r,c:c,p:"black"});turnNum++;
+  var w=checkWin(board,r,c);drawBoard();updateUI();
+  if(w){handleWin(w);return;}
+  doAiTurn(false);
+}
+
+function useSkill(id){
+  if(winner||thinking||myUsed[id])return;
+  var sk=SKILLS.find(function(s){return s.id===id;});if(!sk)return;
+  if(sk.needTarget){activeSkill=id;flash("🎯 "+sk.name+"："+sk.desc);renderSkills();updateUI();return;}
+  var result=sk.execute(board,0,0,"black");board=result.board;myUsed[id]=true;
+  flash(result.msg);turnNum++;drawBoard();renderSkills();updateUI();
+  var w=checkAnyWin(board);if(w){handleWin(w);return;}
+  doAiTurn(result.skipOpponent);
+}
+
+/* ---- DRAW BOARD ---- */
+function drawBoard(){
+  var wrap=document.getElementById('boardWrap');
+  wrap.innerHTML='';
+  wrap.style.width=totalSize+'px';wrap.style.height=totalSize+'px';
+  wrap.style.background='linear-gradient(135deg,#C8A96B,#B8944A)';
+
+  var svg='<svg style="position:absolute;inset:0" width="'+totalSize+'" height="'+totalSize+'">';
+  for(var i=0;i<SIZE;i++){
+    svg+='<line x1="'+pad+'" y1="'+(pad+i*cellSize)+'" x2="'+(pad+(SIZE-1)*cellSize)+'" y2="'+(pad+i*cellSize)+'" stroke="#8A6A30" stroke-width="0.8"/>';
+    svg+='<line x1="'+(pad+i*cellSize)+'" y1="'+pad+'" x2="'+(pad+i*cellSize)+'" y2="'+(pad+(SIZE-1)*cellSize)+'" stroke="#8A6A30" stroke-width="0.8"/>';
+  }
+  var stars=[[3,3],[3,11],[7,7],[11,3],[11,11]];
+  for(var s=0;s<stars.length;s++) svg+='<circle cx="'+(pad+stars[s][1]*cellSize)+'" cy="'+(pad+stars[s][0]*cellSize)+'" r="3" fill="#8A6A30"/>';
+  svg+='</svg>';
+  wrap.innerHTML=svg;
+
+  var last=history2.length>0?history2[history2.length-1]:null;
+
+  for(var r=0;r<SIZE;r++)for(var c=0;c<SIZE;c++){
+    var cell=document.createElement('div');cell.className='cell';
+    cell.style.left=(pad+c*cellSize-cellSize/2)+'px';cell.style.top=(pad+r*cellSize-cellSize/2)+'px';
+    cell.style.width=cellSize+'px';cell.style.height=cellSize+'px';
+    (function(rr,cc){cell.addEventListener('click',function(){placeStone(rr,cc);});})(r,c);
+    wrap.appendChild(cell);
+
+    if(board[r][c]){
+      var isB=board[r][c]==="black";
+      var isLast=last&&last.r===r&&last.c===c;
+      var st=document.createElement('div');st.className='stone';
+      if(winner){st.classList.add(winner===board[r][c]?'win':'lose');}
+      else if(isLast){st.classList.add('last');}
+      var sz=cellSize*0.8;
+      st.style.left=(pad+c*cellSize-sz/2)+'px';st.style.top=(pad+r*cellSize-sz/2)+'px';
+      st.style.width=sz+'px';st.style.height=sz+'px';
+      st.style.background=isB?'radial-gradient(circle at 35% 35%,#555,#111 60%,#000)':'radial-gradient(circle at 35% 35%,#fff,#ddd 50%,#bbb)';
+      st.style.boxShadow=isB?'1px 2px 4px rgba(0,0,0,.6)':'1px 2px 4px rgba(0,0,0,.3)';
+      if(isLast&&!winner){var inn=document.createElement('div');inn.className='stone-inner';st.appendChild(inn);}
+      wrap.appendChild(st);
+    }
+  }
+}
+
+/* ---- RENDER SKILLS ---- */
+function renderSkills(){
+  var sec=document.getElementById('skillsSection');
+  sec.style.width=totalSize+'px';
+  var h='<div class="skills-label"><span>⚡ 你的技能</span>';
+  if(activeSkill)h+='<span style="color:#E8C96B;cursor:pointer;font-size:11px" id="cancelSkill">✕ 取消</span>';
+  h+='</div><div class="skills-row">';
+  for(var i=0;i<SKILLS.length;i++){
+    var sk=SKILLS[i],used=myUsed[sk.id],act=activeSkill===sk.id;
+    h+='<button class="skill-btn'+(act?' active':'')+'" data-skill="'+sk.id+'"'+(used||winner||thinking?' disabled':'')+' style="color:'+sk.color+';opacity:'+(used?.3:1)+';border-color:'+(act?'#E8C96B':'#3A3020')+'">';
+    h+='<span class="se">'+sk.emoji+'</span><span class="sn">'+sk.name+'</span></button>';
+  }
+  h+='</div>';
+  h+='<div style="margin-top:6px"><div class="skills-label"><span>🤖 AI 技能</span></div><div class="ai-row">';
+  for(var i=0;i<SKILLS.length;i++){
+    var sk=SKILLS[i],used=aiUsed[sk.id];
+    h+='<div class="ai-cell'+(used?' used':'')+'"><span class="se">'+sk.emoji+'</span><span>'+(used?'已使用':'未使用')+'</span></div>';
+  }
+  h+='</div></div>';
+  sec.innerHTML=h;
+
+  // Bind skill buttons
+  var btns=sec.querySelectorAll('[data-skill]');
+  btns.forEach(function(btn){btn.addEventListener('click',function(){useSkill(this.getAttribute('data-skill'));});});
+  var cancel=document.getElementById('cancelSkill');
+  if(cancel)cancel.addEventListener('click',function(){activeSkill=null;renderSkills();updateUI();});
+}
+
+/* ---- UPDATE UI ---- */
+function updateUI(){
+  document.getElementById('scoreYou').textContent=scores.you;
+  document.getElementById('scoreAi').textContent=scores.ai;
+  var st=document.getElementById('status');
+  if(activeSkill){st.textContent='🎯 请选择目标 · 点击棋盘';st.className='status gold';}
+  else if(winner==="black"){st.textContent='🎉 你赢了！';st.className='status gold';}
+  else if(winner==="white"){st.textContent='AI 赢了';st.className='status gold';}
+  else if(thinking){st.textContent='AI 思考中…';st.className='status dim';}
+  else if(history2.length===0){st.textContent='你先手（黑子）';st.className='status';}
+  else{st.textContent='轮到你';st.className='status';}
+  document.getElementById('info').textContent='第 '+turnNum+' 回合 · 你用了 '+Object.keys(myUsed).length+' 个技能 · AI用了 '+Object.keys(aiUsed).length+' 个技能';
+  document.getElementById('restartBtn').className=winner?'btn gold':'btn';
+  document.getElementById('restartBtn').textContent=winner?'再来一局':'重新开始';
+}
+
+/* ---- RESULT ---- */
+function showResult(){
+  document.getElementById('rIcon').textContent=winner==='black'?'🎉':'😤';
+  document.getElementById('rIcon').style.animation=winner==='black'?'bounce .6s ease':'none';
+  document.getElementById('rTitle').textContent=winner==='black'?'你赢了！':'AI 赢了';
+  document.getElementById('rTitle').style.color=winner==='black'?'#E8C96B':'#AA8888';
+  document.getElementById('rSub').textContent=winner==='black'?(streak>1?'🔥 连胜 '+streak+' 局！':'干得漂亮！'):'技能用完了？下局再战！';
+  document.getElementById('rTurn').textContent=turnNum;
+  document.getElementById('rMySkills').textContent=Object.keys(myUsed).length;
+  document.getElementById('rAiSkills').textContent=Object.keys(aiUsed).length;
+  document.getElementById('rWins').textContent=scores.you;
+  document.getElementById('overlay').classList.add('show');
+}
+
+/* ---- BIND ---- */
+document.getElementById('restartBtn').addEventListener('click',function(){init();});
+document.getElementById('rViewBtn').addEventListener('click',function(){document.getElementById('overlay').classList.remove('show');});
+document.getElementById('rAgainBtn').addEventListener('click',function(){init();});
+window.addEventListener('resize',function(){calcSize();drawBoard();renderSkills();});
+
+init();
+</script>
+</body>
+</html>
