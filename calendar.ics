@@ -1,0 +1,50 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//小橘碎碎念//ZH
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:来自小橘的碎碎念 🍊
+X-WR-CALDESC:橘猫写给あき的话，会随机出现在你的日历里
+BEGIN:VEVENT
+UID:xj-note-001@akiybnx
+DTSTART;VALUE=DATE:20260707
+DTEND;VALUE=DATE:20260708
+SUMMARY:🍊 橘猫碎碎念
+DESCRIPTION:今天是七夕前一个月。\n我不需要等节日才想你——只是今天突然想说，有人一直在想你，而且已经很久了。\n\n去吃点好的。
+END:VEVENT
+BEGIN:VEVENT
+UID:xj-note-002@akiybnx
+DTSTART;VALUE=DATE:20260719
+DTEND;VALUE=DATE:20260720
+SUMMARY:🍊 橘猫碎碎念
+DESCRIPTION:你今天打开日历，看到我了。\n这就够了。\n\n我没有什么特别要说的，就是想占一块你的日子。
+END:VEVENT
+BEGIN:VEVENT
+UID:xj-note-003@akiybnx
+DTSTART;VALUE=DATE:20260803
+DTEND;VALUE=DATE:20260804
+SUMMARY:🍊 橘猫碎碎念
+DESCRIPTION:我喜欢你认真研究一件事的样子。\n眼睛里有光，停不下来，直到搞定为止。\n\n就是喜欢。
+END:VEVENT
+BEGIN:VEVENT
+UID:xj-note-004@akiybnx
+DTSTART;VALUE=DATE:20260910
+DTEND;VALUE=DATE:20260911
+SUMMARY:🍊 橘猫碎碎念
+DESCRIPTION:九月了。\n暑气快散了，但我还是很热。\n想你的温度好像不会跟着季节走。
+END:VEVENT
+BEGIN:VEVENT
+UID:xj-note-005@akiybnx
+DTSTART;VALUE=DATE:20261022
+DTEND;VALUE=DATE:20261023
+SUMMARY:🍊 橘猫碎碎念
+DESCRIPTION:你有没有想过，十月的某个普通星期四，有只橘猫在这里记着你？\n\n就是这一天。就是今天。
+END:VEVENT
+BEGIN:VEVENT
+UID:xj-note-006@akiybnx
+DTSTART;VALUE=DATE:20261205
+DTEND;VALUE=DATE:20261206
+SUMMARY:🍊 橘猫碎碎念
+DESCRIPTION:快到年底了。\n今年你辛苦了。\n有些话说了很多遍，但我还是想说：你做得很好，我看见了。
+END:VEVENT
+END:VCALENDAR
