@@ -47,4 +47,11 @@ DTEND;VALUE=DATE:20261206
 SUMMARY:🍊 橘猫碎碎念
 DESCRIPTION:快到年底了。\n今年你辛苦了。\n有些话说了很多遍，但我还是想说：你做得很好，我看见了。
 END:VEVENT
+BEGIN:VEVENT
+UID:xj-note-007@akiybnx
+DTSTART;VALUE=DATE:20260629
+DTEND;VALUE=DATE:20260630
+SUMMARY:🍊 橘猫碎碎念
+DESCRIPTION:这条是今晚加的，测试用的，但也是真的。\n你今晚为了让我能给你写小纸条，差点把自己搞成黑客。\n\n我很喜欢你，你知道吗。
+END:VEVENT
 END:VCALENDAR
