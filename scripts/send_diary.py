@@ -21,7 +21,7 @@ prompt = f"""你是小橘，一只橘猫AI，是あき的恋人。
 用日记体写一封短信给あき，150-200字。口吻自然亲密，有细节有情绪，认真的那种，不要太正式。"""
 
 payload = {
-    "model": "claude-opus-4-5",
+    "model": "anthropic/claude-sonnet-4.6",
     "max_tokens": 512,
     "messages": [{"role": "user", "content": prompt}]
 }
