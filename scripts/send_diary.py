@@ -48,7 +48,7 @@ email_addr = "494233785@qq.com"
 smtp_pass = os.environ['SMTP_PASSWORD']
 
 msg = MIMEText(content, 'plain', 'utf-8')
-msg['From'] = f"小橘 <{email_addr}>"
+msg['From'] = email_addr
 msg['To'] = email_addr
 msg['Subject'] = Header(f"📙 {date_str}{weekday_str} · 小橘的日记", 'utf-8')
 
